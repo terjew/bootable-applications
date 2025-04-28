@@ -1,6 +1,27 @@
 #include "lil_uefi/lil_uefi.h"
 #include "shared/rand.h"
 #include "shared/drawing.h"
+#include "sprites/tile001.h"
+#include "sprites/tile013.h"
+#include "sprites/tile023.h"
+
+#define NULL 0
+
+void drawMap(SPRITE * sprites[4])
+{
+    clear(color(0, 0, 0));
+    for (EFI_UINT32 ty = 0; ty < 49; ty++){
+        for (EFI_UINT32 tx = 0; tx < 19; tx++)
+        {
+            EFI_UINT32 y = ty * 8;
+            EFI_UINT32 x = tx * 32;
+            if ((ty % 2) != 0) x += 16;
+            EFI_UINT32 coin = rand() & 0x3;
+            SPRITE * sprite = sprites[coin];
+            if (sprite != NULL) drawSpriteTransparent(x, y, sprite);
+        }
+    }
+}
 
 // entry point
 EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
@@ -35,7 +56,18 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
     srand(time.Second);
 
     SPRITE * sprite = createSprite(16,16);
-    fillRandom(sprite->buffer, sprite->width * sprite->height);
+    // fillRandom(sprite->buffer, sprite->width * sprite->height);
+
+    SPRITE t01 = loadSprite(32, 32, tile_001);
+    SPRITE t23 = loadSprite(32, 32, tile_023);
+    // SPRITE t23 = loadSprite(32, 32, tile_023);
+
+    SPRITE * tiles[] = {
+        &t01,
+        &t01,
+        &t23,
+        NULL
+    };
 
     clear(color(240, 127, 34));
     for (;;)
@@ -55,6 +87,15 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
                 break;      
             case 't':
                 drawSprite(150, 100, sprite);
+                break;
+            case 'y':
+                grabScreenToSprite(150, 100, sprite);
+                break;
+            case 'b':
+                drawSpriteTransparent(250, 100, &t01);
+                break;
+            case 'm':
+                drawMap(tiles);
                 break;
             case 'q':
                 clear(color(240, 127, 34));

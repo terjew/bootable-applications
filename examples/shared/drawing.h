@@ -82,6 +82,16 @@ SPRITE * createSprite(EFI_UINT32 width, EFI_UINT32 height)
     return sprite;
 }
 
+SPRITE loadSprite(EFI_UINT32 width, EFI_UINT32 height, const unsigned int * buffer)
+{
+    SPRITE bitmap;
+    bitmap.width = width;
+    bitmap.height = height;
+    bitmap.strideBytes = width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
+    bitmap.buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*) buffer;
+    return bitmap;
+}
+
 void destroySprite(SPRITE * sprite)
 {
     uefi_free(sprite);
@@ -91,3 +101,25 @@ void drawSprite(EFI_UINT32 dx, EFI_UINT32 dy, SPRITE * sprite)
 {
     graphics->Blt(graphics, (EFI_UINT32*)sprite->buffer, EFI_GRAPHICS_OUTPUT_BLT_OPERATION_BufferToVideo, 0, 0, dx, dy, sprite->width, sprite->height, sprite->strideBytes);
 }
+
+void grabScreenToSprite(EFI_UINT32 sx, EFI_UINT32 sy, SPRITE * sprite)
+{
+    graphics->Blt(graphics, (EFI_UINT32*)sprite->buffer, EFI_GRAPHICS_OUTPUT_BLT_OPERATION_VideoToBuffer, sx, sy, 0, 0, sprite->width, sprite->height, sprite->strideBytes);
+}
+
+void drawSpriteTransparent(EFI_UINT32 dx, EFI_UINT32 dy, SPRITE * sprite)
+{
+    for (EFI_UINT32 y = 0; y < sprite->height; y++)
+    {
+        int py = y + dy;
+        for (EFI_UINT32 x = 0; x < sprite->width; x++)
+        {
+            int px = x + dx;
+            EFI_GRAPHICS_OUTPUT_BLT_PIXEL pixel = sprite->buffer[y * sprite->width + x];
+            if (pixel.Reserved != 0) {
+                pixels[py * stride + px] = pixel;
+            }
+        }
+    }
+}
+
