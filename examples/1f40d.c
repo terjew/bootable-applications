@@ -59,8 +59,8 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
     // fillRandom(sprite->buffer, sprite->width * sprite->height);
 
     SPRITE t01 = loadSprite(32, 32, tile_001);
+    SPRITE t13 = loadSprite(32, 32, tile_013);
     SPRITE t23 = loadSprite(32, 32, tile_023);
-    // SPRITE t23 = loadSprite(32, 32, tile_023);
 
     SPRITE * tiles[] = {
         &t01,
