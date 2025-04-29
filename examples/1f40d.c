@@ -64,12 +64,12 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 
     SPRITE * tiles[] = {
         &t01,
-        &t01,
+        &t13,
         &t23,
         NULL
     };
 
-    clear(color(240, 127, 34));
+    drawMap(tiles);
     for (;;)
     {
         system_table->BootServices->WaitForEvent(1, &system_table->ConIn->WaitForKey, &event);
