@@ -1,9 +1,20 @@
 #include "lil_uefi/lil_uefi.h"
 #include "shared/rand.h"
 #include "shared/drawing.h"
-#include "sprites/tile001.h"
-#include "sprites/tile013.h"
-#include "sprites/tile023.h"
+#include "sprites/tile_000.h"
+#include "sprites/tile_001.h"
+#include "sprites/tile_002.h"
+#include "sprites/tile_003.h"
+#include "sprites/tile_004.h"
+#include "sprites/tile_005.h"
+#include "sprites/tile_006.h"
+#include "sprites/tile_007.h"
+#include "sprites/tile_008.h"
+#include "sprites/tile_009.h"
+#include "sprites/tile_010.h"
+#include "sprites/tile_022.h"
+#include "sprites/tile_023.h"
+#include "sprites/tile_040.h"
 
 #define NULL 0
 
@@ -16,7 +27,7 @@ void drawMap(SPRITE * sprites[4])
             EFI_UINT32 y = ty * 8;
             EFI_UINT32 x = tx * 32;
             if ((ty % 2) != 0) x += 16;
-            EFI_UINT32 coin = rand() & 0x3;
+            EFI_UINT32 coin = rand() & 0xf;
             SPRITE * sprite = sprites[coin];
             if (sprite != NULL) drawSpriteTransparent(x, y, sprite);
         }
@@ -56,17 +67,25 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
     srand(time.Second);
 
     SPRITE * sprite = createSprite(16,16);
-    // fillRandom(sprite->buffer, sprite->width * sprite->height);
-
-    SPRITE t01 = loadSprite(32, 32, tile_001);
-    SPRITE t13 = loadSprite(32, 32, tile_013);
-    SPRITE t23 = loadSprite(32, 32, tile_023);
 
     SPRITE * tiles[] = {
-        &t01,
-        &t13,
-        &t23,
-        NULL
+        loadSprite(32, 32, tile_000),
+        loadSprite(32, 32, tile_001),
+        loadSprite(32, 32, tile_002),
+        loadSprite(32, 32, tile_004),
+        loadSprite(32, 32, tile_005),
+        loadSprite(32, 32, tile_006),
+        loadSprite(32, 32, tile_007),
+        loadSprite(32, 32, tile_008),
+        loadSprite(32, 32, tile_009),
+        loadSprite(32, 32, tile_010),
+        loadSprite(32, 32, tile_022),
+        loadSprite(32, 32, tile_023),
+        loadSprite(32, 32, tile_040),
+        NULL,
+        NULL,
+        NULL,
+        NULL,
     };
 
     drawMap(tiles);
@@ -92,7 +111,7 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
                 grabScreenToSprite(150, 100, sprite);
                 break;
             case 'b':
-                drawSpriteTransparent(250, 100, &t01);
+                drawSpriteTransparent(250, 100, tiles[0]);
                 break;
             case 'm':
                 drawMap(tiles);

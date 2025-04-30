@@ -82,13 +82,13 @@ SPRITE * createSprite(EFI_UINT32 width, EFI_UINT32 height)
     return sprite;
 }
 
-SPRITE loadSprite(EFI_UINT32 width, EFI_UINT32 height, const unsigned int * buffer)
+SPRITE * loadSprite(EFI_UINT32 width, EFI_UINT32 height, const unsigned int * buffer)
 {
-    SPRITE bitmap;
-    bitmap.width = width;
-    bitmap.height = height;
-    bitmap.strideBytes = width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
-    bitmap.buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*) buffer;
+    SPRITE * bitmap = uefi_malloc(sizeof(SPRITE));
+    bitmap->width = width;
+    bitmap->height = height;
+    bitmap->strideBytes = width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
+    bitmap->buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*) buffer;
     return bitmap;
 }
 
