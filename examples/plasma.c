@@ -22,7 +22,7 @@ void plasma(double time)
     double xPos = 128.0 + (128 * cos(time / 13));
     double yPos =  96.0 + (192 * cos(time / 17));
 
-    int stepSize = 2;
+    int stepSize = 1;
     for (int y = 0; y < h; y += stepSize)
     {
         for (int x = 0; x < w; x += stepSize)
@@ -38,7 +38,7 @@ void plasma(double time)
             bgra = HsvToRgb(hsva);
             int y2 = y * 2;
             int x2 = x * 2;
-            pixels[y2 * width + x2] = *pixel;
+            pixels[y2 * stride + x2] = *pixel;
         }
     }
 }
@@ -76,7 +76,7 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
     srand(time.Second);
 
     double t = 2;
-    int t2 = 0;
+    plasma(t);
     for (;;)
     {
         system_table->BootServices->WaitForEvent(1, &system_table->ConIn->WaitForKey, &event);
