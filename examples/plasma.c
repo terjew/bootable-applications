@@ -30,16 +30,17 @@ void plasma(double time)
     double p2y = h * 0.375;
     double p4y = h * 0.5;
 
+    double scaleFactor = (w / 20);
     int stepSize = 2;
     for (int y = 0; y < h; y += stepSize)
     {
         for (int x = 0; x < w; x += stepSize)
         {
             double value = 0.0 +
-                           sin(dist(x, y, p1x,  p1y) / 36.0) + // constant for each x,y. Distance from a point at 0.25,0.25 in screen coords
-                           sin(dist(x, y, p2x,  p2y) / 32.0) + // constant for each x,y. Distance from a point at 0.75,0.375 in screen coords
-                           sin(dist(x, y, p3x, yPos) / 16.0) + // moving vertically. Distance from a moving point starting at 0.75,0.25 in screen coords
-                           sin(dist(x, y, xPos, p4y) / 24.0) + // moving horizontally. Distance from a moving point starting at 0.5,0.5 in screen coords
+                           sin(dist(x, y, p1x,  p1y) / scaleFactor) + // constant for each x,y. Distance from a point at 0.25,0.25 in screen coords
+                           sin(dist(x, y, p2x,  p2y) / scaleFactor) + // constant for each x,y. Distance from a point at 0.75,0.375 in screen coords
+                           sin(dist(x, y, p3x, yPos) / scaleFactor) + // moving vertically. Distance from a moving point starting at 0.75,0.25 in screen coords
+                           sin(dist(x, y, xPos, p4y) / scaleFactor) + // moving horizontally. Distance from a moving point starting at 0.5,0.5 in screen coords
                            0;
 
             hsva.h = (unsigned char)(value * 90);
