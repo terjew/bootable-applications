@@ -1,11 +1,4 @@
-//https://stackoverflow.com/a/14733008/2087791
-
-typedef struct Color_BGRA {
-    unsigned char b;
-    unsigned char g;
-    unsigned char r;
-    unsigned char a;
-} Color_BGRA;
+//Based on https://stackoverflow.com/a/14733008/2087791
 
 typedef struct Color_HSVA {
     unsigned char h;
@@ -14,17 +7,17 @@ typedef struct Color_HSVA {
     unsigned char a;
 } Color_HSVA;
 
-Color_BGRA HsvToRgb(Color_HSVA hsva)
+EFI_GRAPHICS_OUTPUT_BLT_PIXEL HsvToRgb(Color_HSVA hsva)
 {
-    Color_BGRA bgra;
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL bgra;
     unsigned char region, remainder, p, q, t;
     
     if (hsva.s == 0)
     {
-        bgra.r = hsva.v;
-        bgra.g = hsva.v;
-        bgra.b = hsva.v;
-        bgra.a = hsva.a;
+        bgra.Red = hsva.v;
+        bgra.Green = hsva.v;
+        bgra.Blue = hsva.v;
+        bgra.Reserved = hsva.a;
         return bgra;
     }
     
@@ -38,37 +31,37 @@ Color_BGRA HsvToRgb(Color_HSVA hsva)
     switch (region)
     {
         case 0:
-            bgra.r = hsva.v; bgra.g = t; bgra.b = p;
+            bgra.Red = hsva.v; bgra.Green = t; bgra.Blue = p;
             break;
         case 1:
-            bgra.r = q; bgra.g = hsva.v; bgra.b = p;
+            bgra.Red = q; bgra.Green = hsva.v; bgra.Blue = p;
             break;
         case 2:
-            bgra.r = p; bgra.g = hsva.v; bgra.b = t;
+            bgra.Red = p; bgra.Green = hsva.v; bgra.Blue = t;
             break;
         case 3:
-            bgra.r = p; bgra.g = q; bgra.b = hsva.v;
+            bgra.Red = p; bgra.Green = q; bgra.Blue = hsva.v;
             break;
         case 4:
-            bgra.r = t; bgra.g = p; bgra.b = hsva.v;
+            bgra.Red = t; bgra.Green = p; bgra.Blue = hsva.v;
             break;
         default:
-            bgra.r = hsva.v; bgra.g = p; bgra.b = q;
+            bgra.Red = hsva.v; bgra.Green = p; bgra.Blue = q;
             break;
     }
     
     return bgra;
 }
 
-Color_HSVA RgbToHsv(Color_BGRA bgra)
+Color_HSVA RgbToHsv(EFI_GRAPHICS_OUTPUT_BLT_PIXEL bgra)
 {
     Color_HSVA hsva;
-    hsva.a = bgra.a;
+    hsva.a = bgra.Reserved;
 
     unsigned char rgbMin, rgbMax;
 
-    rgbMin = bgra.r < bgra.g ? (bgra.r < bgra.b ? bgra.r : bgra.b) : (bgra.g < bgra.b ? bgra.g : bgra.b);
-    rgbMax = bgra.r > bgra.g ? (bgra.r > bgra.b ? bgra.r : bgra.b) : (bgra.g > bgra.b ? bgra.g : bgra.b);
+    rgbMin = bgra.Red < bgra.Green ? (bgra.Red < bgra.Blue ? bgra.Red : bgra.Blue) : (bgra.Green < bgra.Blue ? bgra.Green : bgra.Blue);
+    rgbMax = bgra.Red > bgra.Green ? (bgra.Red > bgra.Blue ? bgra.Red : bgra.Blue) : (bgra.Green > bgra.Blue ? bgra.Green : bgra.Blue);
     
     hsva.v = rgbMax;
     if (hsva.v == 0)
@@ -85,12 +78,12 @@ Color_HSVA RgbToHsv(Color_BGRA bgra)
         return hsva;
     }
 
-    if (rgbMax == bgra.r)
-        hsva.h = 0 + 43 * (bgra.g - bgra.b) / (rgbMax - rgbMin);
-    else if (rgbMax == bgra.g)
-        hsva.h = 85 + 43 * (bgra.b - bgra.r) / (rgbMax - rgbMin);
+    if (rgbMax == bgra.Red)
+        hsva.h = 0 + 43 * (bgra.Green - bgra.Blue) / (rgbMax - rgbMin);
+    else if (rgbMax == bgra.Green)
+        hsva.h = 85 + 43 * (bgra.Blue - bgra.Red) / (rgbMax - rgbMin);
     else
-        hsva.h = 171 + 43 * (bgra.r - bgra.g) / (rgbMax - rgbMin);
+        hsva.h = 171 + 43 * (bgra.Red - bgra.Green) / (rgbMax - rgbMin);
 
     return hsva;
 }

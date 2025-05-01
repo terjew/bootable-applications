@@ -4,7 +4,7 @@
 #include "shared/math.h"
 #include "shared/colorspace.h"
 
-// https://lodev.org/cgtutor/plasma.html
+// Inspired by https://lodev.org/cgtutor/plasma.html
 #define dist(a, b, c, d) sqrt((double)((a - c) * (a - c) + (b - d) * (b - d)))
 void plasma(double time)
 {
@@ -14,8 +14,7 @@ void plasma(double time)
     hsva.v = 255;
     hsva.a = 255;
 
-    Color_BGRA bgra;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pixel = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)(unsigned int *)&bgra;
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL pixel;
 
     int w = 640;
     int h = 480;
@@ -43,9 +42,7 @@ void plasma(double time)
             0;
 
             hsva.h = (unsigned char)(value * 90);
-            // hsva.v = ((value + 4) / 8) * 255;
-            bgra = HsvToRgb(hsva);
-            pixels[y * stride + x] = *pixel;
+            pixels[y * stride + x] = HsvToRgb(hsva);
         }
     }
 }

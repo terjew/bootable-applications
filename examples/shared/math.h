@@ -38,8 +38,3 @@ double sqrt(double x)
     );
     return x;
 }
-
-// double fabs(double f)
-// {
-//     return f >= 0.0 ? f : -f;
-// }
