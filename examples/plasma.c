@@ -4,11 +4,12 @@
 #include "shared/math.h"
 #include "shared/colorspace.h"
 
+#define NULL 0
+
 // Inspired by https://lodev.org/cgtutor/plasma.html
 #define dist(a, b, c, d) sqrt((double)((a - c) * (a - c) + (b - d) * (b - d)))
 void plasma(double time)
 {
-    clear(color(0, 0, 0));
     Color_HSVA hsva;
     hsva.s = 255;
     hsva.v = 255;
@@ -16,15 +17,15 @@ void plasma(double time)
 
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL pixel;
 
-    int w = 640;
-    int h = 480;
-    double xPos = 128.0 + (128 * cos(time / 13));
-    double yPos =  96.0 + (192 * cos(time / 17));
+    int w = width;
+    int h = height;
+    double xPos = w / 2 + (w * cos(time / 13));
+    double yPos = h/3 + (h * cos(time / 17));
 
     double p1x = w * 0.25;
     double p2x = w * 0.75;
     double p3x = w * 0.75;
-    
+
     double p1y = h * 0.25;
     double p2y = h * 0.375;
     double p4y = h * 0.5;
@@ -35,11 +36,11 @@ void plasma(double time)
         for (int x = 0; x < w; x += stepSize)
         {
             double value = 0.0 +
-                sin(dist(x, y, p1x ,  p1y) / 23.0) + //constant for each x,y. Distance from a point at 0.25,0.25 in screen coords
-                sin(dist(x, y, p2x ,  p2y) / 17.0) + //constant for each x,y. Distance from a point at 0.75,0.375 in screen coords
-                sin(dist(x, y, p3x , yPos) / 13.0) + //moving vertically. Distance from a point at 0.75,0.25 in screen coords
-                sin(dist(x, y, xPos,  p4y) / 27.0) + //moving horizontally. Distance from a point at 0.5,0.5 in screen coords
-            0;
+                           sin(dist(x, y, p1x,  p1y) / 36.0) + // constant for each x,y. Distance from a point at 0.25,0.25 in screen coords
+                           sin(dist(x, y, p2x,  p2y) / 32.0) + // constant for each x,y. Distance from a point at 0.75,0.375 in screen coords
+                           sin(dist(x, y, p3x, yPos) / 16.0) + // moving vertically. Distance from a moving point starting at 0.75,0.25 in screen coords
+                           sin(dist(x, y, xPos, p4y) / 24.0) + // moving horizontally. Distance from a moving point starting at 0.5,0.5 in screen coords
+                           0;
 
             hsva.h = (unsigned char)(value * 90);
             pixels[y * stride + x] = HsvToRgb(hsva);
@@ -79,31 +80,20 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 
     srand(time.Second);
 
-    double t = 2;
+    clear(color(0, 0, 0));
+
+    double t = 0;
     plasma(t);
+
+    EFI_UINTN index;
+    EFI_EVENT loopEvent;
+    status = boot_services->CreateEvent(EFI_EVT_TIMER, EFI_TPL_CALLBACK, NULL, (void *)NULL, &loopEvent);
+    status = boot_services->SetTimer(loopEvent, EFI_TIMER_DELAY_Periodic, 1);
     for (;;)
     {
-        system_table->BootServices->WaitForEvent(1, &system_table->ConIn->WaitForKey, &event);
-        system_table->ConIn->ReadKeyStroke(system_table->ConIn, &key);
-
-        switch (key.UnicodeChar)
-        {
-        case 13:
-            goto end;
-        case 'a':
-            clearRandom();
-            break;
-        case 'q':
-            clear(color(240, 127, 34));
-            break;
-        default:
-            clear(randomColor());
-            break;
-        case 'p':
-            plasma(t);
-            t += 0.1f;
-            break;
-        }
+        status = boot_services->WaitForEvent(1, &loopEvent, &index);
+        plasma(t);
+        t += 0.1f;
     }
 
 end:
