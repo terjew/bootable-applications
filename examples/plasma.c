@@ -19,14 +19,20 @@ void plasma(double time)
 
     int w = 320;
     int h = 240;
-    for (int y = 0; y < h; y += 1)
-        for (int x = 0; x < w; x += 1)
+    double xPos = 128.0 + (128 * cos(time / 13));
+    double yPos =  96.0 + (192 * cos(time / 17));
+
+    int stepSize = 2;
+    for (int y = 0; y < h; y += stepSize)
+    {
+        for (int x = 0; x < w; x += stepSize)
         {
-            double value = //-4..4
-                sin(dist(x + time, y, 128.0, 128.0) / 8.0) + 
-                sin(dist(x, y, 64.0, 64.0) / 8.0) + 
-                sin(dist(x, y + time / 7, 192.0, 64) / 7.0) + 
-                sin(dist(x, y, 192.0, 96.0) / 8.0);
+            double value = 0.0 + //-4..4
+                sin(dist(x, y, 64.0,   64.0) / 23.0) + //constant for each x,y. Distance from a point at 0.25,0.25 in screen coords
+                sin(dist(x, y, 192.0,  96.0) / 17.0) + //constant for each x,y. Distance from a point at 0.75,0.375 in screen coords
+                sin(dist(x, y, 192.0,  yPos) / 13.0) + //moving vertically. Distance from a point at 0.75,0.25 in screen coords
+                sin(dist(x, y, xPos,  128.0) / 27.0) + // moving horizontally. Distance from a point at 0.5,0.5 in screen coords
+            0;
 
             hsva.h = (unsigned char)(value * 90);
             bgra = HsvToRgb(hsva);
@@ -34,6 +40,7 @@ void plasma(double time)
             int x2 = x * 2;
             pixels[y2 * width + x2] = *pixel;
         }
+    }
 }
 
 // entry point
@@ -90,7 +97,7 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
             break;
         case 'p':
             plasma(t);
-            t += 3.0f;
+            t += 0.1f;
             break;
         }
     }
