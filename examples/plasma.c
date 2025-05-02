@@ -120,7 +120,7 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
     EFI_UINTN index;
     EFI_EVENT loopEvent;
     status = boot_services->CreateEvent(EFI_EVT_TIMER, EFI_TPL_CALLBACK, NULL, (void *)NULL, &loopEvent);
-    status = boot_services->SetTimer(loopEvent, EFI_TIMER_DELAY_Periodic, 1);
+    status = boot_services->SetTimer(loopEvent, EFI_TIMER_DELAY_Periodic, 166000);
     for (;;)
     {
         status = boot_services->WaitForEvent(1, &loopEvent, &index);
