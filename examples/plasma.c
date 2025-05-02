@@ -8,8 +8,42 @@
 
 // Inspired by https://lodev.org/cgtutor/plasma.html
 #define dist(a, b, c, d) sqrt((double)((a - c) * (a - c) + (b - d) * (b - d)))
+
+double * InitializeStaticData()
+{
+    double * data = uefi_malloc(stride * height * sizeof(double));
+    double p1x = width * 0.25;
+    double p2x = width * 0.75;
+    double p1y = height * 0.25;
+    double p2y = height * 0.375;
+    double scaleFactor = (width / 20);
+
+    for (int y = 0; y < height; y += 1)
+    {
+        for (int x = 0; x < width; x += 1)
+        {
+            data[y * stride + x] = 
+                sin(dist(x, y, p1x,  p1y) / scaleFactor) + // constant for each x,y. Distance from a point at 0.25,0.25 in screen coords
+                sin(dist(x, y, p2x,  p2y) / scaleFactor) + // constant for each x,y. Distance from a point at 0.75,0.375 in screen coords
+                0;
+        }
+    }
+    return data;
+}
+
+double * staticData = 0;
+SPRITE * backBuffer = 0;
+
+int interlacing = 0;
 void plasma(double time)
 {
+    if (staticData == 0) staticData = InitializeStaticData();
+    if (backBuffer == 0) {
+        fill(backBuffer->buffer, backBuffer->width * backBuffer->height, color(0,0,0));
+        backBuffer = createSprite(width, height);
+    }
+    interlacing = (interlacing + 1) % 2;
+
     Color_HSVA hsva;
     hsva.s = 255;
     hsva.v = 255;
@@ -22,31 +56,27 @@ void plasma(double time)
     double xPos = w / 2 + (w * cos(time / 13));
     double yPos = h/3 + (h * cos(time / 17));
 
-    double p1x = w * 0.25;
-    double p2x = w * 0.75;
     double p3x = w * 0.75;
-
-    double p1y = h * 0.25;
-    double p2y = h * 0.375;
     double p4y = h * 0.5;
 
     double scaleFactor = (w / 20);
-    int stepSize = 2;
-    for (int y = 0; y < h; y += stepSize)
+    for (int y = interlacing; y < h; y += 2)
     {
-        for (int x = 0; x < w; x += stepSize)
+        for (int x = 0; x < w; x += 1)
         {
+            int pos = y * stride + x;
+            
             double value = 0.0 +
-                           sin(dist(x, y, p1x,  p1y) / scaleFactor) + // constant for each x,y. Distance from a point at 0.25,0.25 in screen coords
-                           sin(dist(x, y, p2x,  p2y) / scaleFactor) + // constant for each x,y. Distance from a point at 0.75,0.375 in screen coords
+                           staticData[pos] + 
                            sin(dist(x, y, p3x, yPos) / scaleFactor) + // moving vertically. Distance from a moving point starting at 0.75,0.25 in screen coords
                            sin(dist(x, y, xPos, p4y) / scaleFactor) + // moving horizontally. Distance from a moving point starting at 0.5,0.5 in screen coords
                            0;
 
-            hsva.h = (unsigned char)(value * 90);
-            pixels[y * stride + x] = HsvToRgb(hsva);
+            hsva.h = (unsigned char)(value * 90) + 270;
+            backBuffer->buffer[y * stride + x] = HsvToRgb(hsva);
         }
     }
+    drawSprite(0,0,backBuffer);
 }
 
 // entry point
@@ -84,6 +114,7 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
     clear(color(0, 0, 0));
 
     double t = 0;
+    int offset = 0;
     plasma(t);
 
     EFI_UINTN index;
