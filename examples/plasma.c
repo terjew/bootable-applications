@@ -6,7 +6,7 @@
 
 #define NULL 0
 
-// Inspired by https://lodev.org/cgtutor/plasma.html
+// Originally inspired by https://lodev.org/cgtutor/plasma.html
 #define dist(a, b, c, d) sqrt((double)((a - c) * (a - c) + (b - d) * (b - d)))
 
 double * InitializeStaticData()
@@ -54,26 +54,26 @@ void plasma(double time)
     int w = width;
     int h = height;
     double xPos = w / 2 + (w * cos(time / 13));
-    double yPos = h/3 + (h * cos(time / 17));
+    double yPos = h / 3 + (h * cos(time / 17));
 
     double p3x = w * 0.75;
     double p4y = h * 0.5;
 
     double scaleFactor = (w / 20);
+
     for (int y = interlacing; y < h; y += 2)
     {
         for (int x = 0; x < w; x += 1)
         {
-            int pos = y * stride + x;
-            
+            int pos = y * stride + x;        
             double value = 0.0 +
                            staticData[pos] + 
                            sin(dist(x, y, p3x, yPos) / scaleFactor) + // moving vertically. Distance from a moving point starting at 0.75,0.25 in screen coords
                            sin(dist(x, y, xPos, p4y) / scaleFactor) + // moving horizontally. Distance from a moving point starting at 0.5,0.5 in screen coords
                            0;
 
-            hsva.h = (unsigned char)(value * 90) + 270;
-            backBuffer->buffer[y * stride + x] = HsvToRgb(hsva);
+            hsva.h = (unsigned char)(value * 90) + 35;
+            backBuffer->buffer[pos] = HsvToRgb(hsva);
         }
     }
     drawSprite(0,0,backBuffer);
@@ -84,11 +84,9 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 {
     EFI_BOOT_SERVICES *boot_services = system_table->BootServices;
     EFI_STATUS status;
-    int ns;
 
     initialize_memory(boot_services);
 
-    // TBD: Query modes and present the available options?
     EFI_GUID gfx_out_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gfx_out_prot;
     status = boot_services->LocateProtocol(&gfx_out_guid, 0, (void **)&gfx_out_prot);
@@ -100,21 +98,7 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 
     initialize_drawing(gfx_out_prot);
 
-    EFI_UINTN event;
-    EFI_INPUT_KEY key;
-
-    EFI_UINT32 *frame_buffer_addr = (EFI_UINT32 *)gfx_out_prot->Mode->frame_buffer_base;
-    EFI_UINT64 frame_buffer_size = gfx_out_prot->Mode->frame_buffer_size;
-
-    EFI_TIME time;
-    system_table->RuntimeServices->GetTime(&time, 0);
-
-    srand(time.Second);
-
-    clear(color(0, 0, 0));
-
     double t = 0;
-    int offset = 0;
     plasma(t);
 
     EFI_UINTN index;
@@ -128,6 +112,5 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
         t += 0.1f;
     }
 
-end:
-    return (0);
+    return 0;
 }
