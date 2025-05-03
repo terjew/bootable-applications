@@ -94,25 +94,15 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
         system_table->BootServices->WaitForEvent(1, &system_table->ConIn->WaitForKey, &event);
         system_table->ConIn->ReadKeyStroke(system_table->ConIn, &key);
 
+        switch(key.ScanCode)
+        {
+            case 0x17: 
+                system_table->RuntimeServices->ResetSystem(EFI_RESET_TYPE_Shutdown, 0, 0, NULL);
+            default:
+                break;
+        }
         switch (key.UnicodeChar)
         {
-            case 13: 
-                goto end;
-            case 'a':
-                clearRandom();
-                break;
-            case 'r':
-                drawRectangle(50, 100, 10, 20, color(255, 0, 0));
-                break;      
-            case 't':
-                drawSprite(150, 100, sprite);
-                break;
-            case 'y':
-                grabScreenToSprite(150, 100, sprite);
-                break;
-            case 'b':
-                drawSpriteTransparent(250, 100, tiles[0]);
-                break;
             case 'm':
                 drawMap(tiles);
                 break;
@@ -125,6 +115,5 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
         }
     }
 
-end:
     return (0);
 }

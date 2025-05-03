@@ -35,3 +35,9 @@ void srand(unsigned long seed)
 {
   rand_state = seed;
 }
+
+EFI_GRAPHICS_OUTPUT_BLT_PIXEL randomColor()
+{
+    EFI_UINT32 color = rand() & 0xffffff;
+    return *((EFI_GRAPHICS_OUTPUT_BLT_PIXEL*)&color);
+}

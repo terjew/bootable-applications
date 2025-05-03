@@ -18,20 +18,6 @@ void initialize_drawing(EFI_GRAPHICS_OUTPUT_PROTOCOL * graphics_in)
     bufferSize = graphics->Mode->frame_buffer_size;
 }
 
-EFI_GRAPHICS_OUTPUT_BLT_PIXEL randomColor()
-{
-    EFI_UINT32 color = rand() & 0xffffff;
-    return *((EFI_GRAPHICS_OUTPUT_BLT_PIXEL*)&color);
-}
-
-void fillRandom(EFI_GRAPHICS_OUTPUT_BLT_PIXEL * buffer, EFI_UINT32 size)
-{
-    for (EFI_UINT64 idx = 0; idx < size; idx += 1)
-    {
-        buffer[idx] = randomColor();
-    }
-}
-
 void fill(EFI_GRAPHICS_OUTPUT_BLT_PIXEL * buffer, EFI_UINT32 size, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
 {
     for (EFI_UINT64 idx = 0; idx < size; idx += 1)
@@ -58,11 +44,6 @@ void drawRectangle(EFI_UINT32 dx, EFI_UINT32 dy, EFI_UINT32 width, EFI_UINT32 he
 void clear(EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
 {
     drawRectangle(0, 0, width, height, color);
-}
-
-void clearRandom()
-{
-    fillRandom(pixels, bufferSize / sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 }
 
 typedef struct {
