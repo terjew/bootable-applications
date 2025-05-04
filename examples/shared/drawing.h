@@ -1,3 +1,6 @@
+#ifndef DRAWING_H
+#define DRAWING_H
+
 #include "lil_uefi/lil_uefi.h"
 #include "memory.h"
 
@@ -104,3 +107,35 @@ void drawSpriteTransparent(EFI_UINT32 dx, EFI_UINT32 dy, SPRITE * sprite)
     }
 }
 
+void drawLine(EFI_UINT32 x0, EFI_UINT32 y0, EFI_UINT32 x1, EFI_UINT32 y1, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
+{
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    EFI_UINT32 xSteps = abs(dx);
+    EFI_UINT32 ySteps = abs(dy);
+    EFI_UINT32 numSteps = MAX(xSteps, ySteps);
+    float numStepsF = (float) numSteps;
+    float xIncrement = dx / numStepsF;
+    float yIncrement = dy / numStepsF;
+
+    float xf = x0;
+    float yf = y0;
+    for (EFI_UINT32 step = 0; step <= numSteps; ++step)
+    {
+        EFI_UINT32 x = (EFI_UINT32)roundf(xf);
+        EFI_UINT32 y = (EFI_UINT32)roundf(yf);
+        pixels[y * stride + x] = color;
+        xf += xIncrement;
+        yf += yIncrement;
+    }
+}
+
+void drawQuad(EFI_UINT32 x0, EFI_UINT32 y0, EFI_UINT32 x1, EFI_UINT32 y1, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
+{
+    drawLine(x0, y0, x1, y0, color);
+    drawLine(x1, y0, x1, y1, color);
+    drawLine(x1, y1, x0, y1, color);
+    drawLine(x0, y1, x0, y0, color);
+}
+
+#endif

@@ -1,5 +1,6 @@
 #include "lil_uefi/lil_uefi.h"
 #include "shared/rand.h"
+#include "shared/math.h"
 #include "shared/drawing.h"
 #include "sprites/tile_000.h"
 #include "sprites/tile_001.h"
@@ -15,6 +16,8 @@
 #include "sprites/tile_022.h"
 #include "sprites/tile_023.h"
 #include "sprites/tile_040.h"
+
+#include "shared/matrix.h"
 
 #define NULL 0
 
@@ -33,7 +36,7 @@ void drawMap(MAP * map, SPRITE ** sprites)
     EFI_UINT32 dx = TILE_WIDTH / 2;
     EFI_UINT32 dy = dx / 2;
     EFI_UINT32 xpos = width / 2 - dx; //centered on screen    
-    EFI_UINT32 ypos = height / 2 - map->height * dy; 
+    EFI_UINT32 ypos = height / 2 - map->height * dy - TILE_HEIGHT + dy; 
 
     for (EFI_UINT32 y = 0; y < map->height; y++)
     {
@@ -46,6 +49,37 @@ void drawMap(MAP * map, SPRITE ** sprites)
             if (sprite != NULL) drawSpriteTransparent(xs, ys, sprite);
         }
     }
+
+    float zrot[4][4]; rotateZ(zrot, -M_PI / 4);
+    float xrot[4][4]; rotateX(xrot, 1.0472);//60 degrees 
+    float trans[4][4]; translate(trans, xpos + 15.5, ypos + 8, 0);
+    float scaleFactor = 22.60;//?
+    float scalem[4][4]; scale(scalem, scaleFactor, scaleFactor, scaleFactor);
+    float trans_scale[4][4]; mul(scalem, trans, trans_scale);
+    float trans_scale_rot1[4][4]; mul(xrot, trans_scale, trans_scale_rot1);
+    float mat[4][4]; mul(zrot, trans_scale_rot1, mat);
+
+    float p1[] = {0,0,0.5,1};
+    float p2[] = {map->width,0,0.5,1};
+    float p3[] = {0,map->height,0.5,1};
+    float p4[] = {map->width,map->height,0.5,1};
+
+    float p1_trans[4];
+    float p2_trans[4];
+    float p3_trans[4];
+    float p4_trans[4];
+
+    transform(mat, p1, p1_trans);
+    transform(mat, p2, p2_trans);
+    transform(mat, p3, p3_trans);
+    transform(mat, p4, p4_trans);
+
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL green = color(0,255,0);
+    drawLine(p1_trans[0], p1_trans[1], p2_trans[0], p2_trans[1], green);
+    drawLine(p1_trans[0], p1_trans[1], p3_trans[0], p3_trans[1], green);
+    drawLine(p2_trans[0], p2_trans[1], p4_trans[0], p4_trans[1], green);
+    drawLine(p3_trans[0], p3_trans[1], p4_trans[0], p4_trans[1], green);
+
 }
 
 
@@ -102,8 +136,6 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 
     srand(time.Second);
 
-    SPRITE * sprite = createSprite(16,16);
-
     SPRITE * tiles[] = {
         loadSprite(32, 32, tile_000),
         loadSprite(32, 32, tile_001),
@@ -127,6 +159,7 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
     MAP * map = createMap(20,20);
     fillMap(map, 16);    
     drawMap(map, tiles);
+
     for (;;)
     {
         system_table->BootServices->WaitForEvent(1, &system_table->ConIn->WaitForKey, &event);

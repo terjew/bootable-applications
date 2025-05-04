@@ -1,3 +1,5 @@
+#ifndef RAND_H
+#define RAND_H
 /*  
 Splitmix64
 
@@ -45,3 +47,5 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL randomColor()
 EFI_UINT32 randRange(EFI_UINT32 min, EFI_UINT32 max) {
   return min + ((EFI_UINT32)rand_long()) % (max - min + 1);
 }
+
+#endif

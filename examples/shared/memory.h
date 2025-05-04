@@ -1,3 +1,6 @@
+#ifndef MEMORY_H
+#define MEMORY_H
+
 #include "lil_uefi/lil_uefi.h"
 
 EFI_BOOT_SERVICES *boot_services;
@@ -18,3 +21,5 @@ void uefi_free(void * pool)
 {
     boot_services->FreePool(pool);
 }
+
+#endif

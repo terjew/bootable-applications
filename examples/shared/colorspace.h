@@ -1,3 +1,6 @@
+#ifndef COLORSPACE_H
+#define COLORSPACE_H
+
 //Based on https://stackoverflow.com/a/14733008/2087791
 
 typedef struct Color_HSVA {
@@ -87,3 +90,5 @@ Color_HSVA RgbToHsv(EFI_GRAPHICS_OUTPUT_BLT_PIXEL bgra)
 
     return hsva;
 }
+
+#endif
