@@ -18,18 +18,55 @@
 
 #define NULL 0
 
-void drawMap(SPRITE * sprites[4])
+const EFI_UINT32 TILE_WIDTH = 32;
+const EFI_UINT32 TILE_HEIGHT = 32;
+
+typedef struct MAP
 {
-    clear(color(0, 0, 0));
-    for (EFI_UINT32 ty = 0; ty < 49; ty++){
-        for (EFI_UINT32 tx = 0; tx < 19; tx++)
+    EFI_UINT32 width;
+    EFI_UINT32 height;
+    EFI_UINT8 tiles[0];
+} MAP;
+
+void drawMap(MAP * map, SPRITE ** sprites)
+{
+    EFI_UINT32 dx = TILE_WIDTH / 2;
+    EFI_UINT32 dy = dx / 2;
+    EFI_UINT32 xpos = width / 2 - dx; //centered on screen    
+    EFI_UINT32 ypos = height / 2 - map->height * dy; 
+
+    for (EFI_UINT32 y = 0; y < map->height; y++)
+    {
+        for (EFI_UINT32 x = 0; x < map->width; x++)
         {
-            EFI_UINT32 y = ty * 8;
-            EFI_UINT32 x = tx * 32;
-            if ((ty % 2) != 0) x += 16;
-            EFI_UINT32 coin = rand() & 0xf;
-            SPRITE * sprite = sprites[coin];
-            if (sprite != NULL) drawSpriteTransparent(x, y, sprite);
+            EFI_UINT8 tileIndex = map->tiles[y * map->width + x];
+            SPRITE * sprite = sprites[tileIndex];
+            EFI_UINT32 xs = xpos + (x - y) * dx;
+            EFI_UINT32 ys = ypos + (x + y) * dy;
+            if (sprite != NULL) drawSpriteTransparent(xs, ys, sprite);
+        }
+    }
+}
+
+
+MAP * createMap(EFI_UINT32 width, EFI_UINT32 height)
+{
+    MAP * map = (MAP *) uefi_malloc(sizeof(MAP) + sizeof(EFI_UINT8) * width * height);
+    map->width = width;
+    map->height = height;
+    return map;
+}
+
+//Idea for more advanced generation: Start with an ocean, create a land mass in the middle (like an island). 
+//Correct the ocean tiles closest to the island to ones that match the placement of land tiles next to them.
+//Possibly make the "island" more like a thin land mass with ocean on both sides, but possible to scroll infinitely in one direction.
+void fillMap(MAP * map, EFI_UINT32 numTiles)
+{
+    for (int y = 0; y < map->height; y++)
+    {
+        for (int x = 0; x < map->width; x++)
+        {
+            map->tiles[y * map->width + x] = randRange(0, numTiles - 1);
         }
     }
 }
@@ -43,7 +80,6 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 
     initialize_memory(boot_services);
     
-    // TBD: Query modes and present the available options?
     EFI_GUID gfx_out_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL * gfx_out_prot;
     status = boot_services->LocateProtocol(&gfx_out_guid, 0, (void **)&gfx_out_prot);
@@ -88,7 +124,9 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
         NULL,
     };
 
-    drawMap(tiles);
+    MAP * map = createMap(20,20);
+    fillMap(map, 16);    
+    drawMap(map, tiles);
     for (;;)
     {
         system_table->BootServices->WaitForEvent(1, &system_table->ConIn->WaitForKey, &event);
@@ -104,7 +142,9 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
         switch (key.UnicodeChar)
         {
             case 'm':
-                drawMap(tiles);
+                clear(color(0,0,0));
+                fillMap(map, 16);    
+                drawMap(map, tiles);
                 break;
             case 'q':
                 clear(color(240, 127, 34));

@@ -16,22 +16,22 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
    It is a very fast generator passing BigCrush, and it can be useful if
    for some reason you absolutely want 64 bits of state. */
 
-static unsigned long rand_state; /* The state can be seeded with any value. */
+static EFI_UINT64 rand_state; /* The state can be seeded with any value. */
 
-unsigned long rand_long()
+EFI_UINT64 rand_long()
 {
-  unsigned long z = (rand_state += 0x9e3779b97f4a7c15);
+  EFI_UINT64 z = (rand_state += 0x9e3779b97f4a7c15);
   z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
   z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
   return z ^ (z >> 31);
 }
 
-unsigned int rand()
+EFI_UINT32 rand()
 {
-  return (unsigned int)(rand_long() & 0xffffffff);
+  return (EFI_UINT32)(rand_long() & 0xffffffff);
 }
 
-void srand(unsigned long seed)
+void srand(EFI_UINT64 seed)
 {
   rand_state = seed;
 }
@@ -40,4 +40,8 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL randomColor()
 {
     EFI_UINT32 color = rand() & 0xffffff;
     return *((EFI_GRAPHICS_OUTPUT_BLT_PIXEL*)&color);
+}
+
+EFI_UINT32 randRange(EFI_UINT32 min, EFI_UINT32 max) {
+  return min + ((EFI_UINT32)rand_long()) % (max - min + 1);
 }

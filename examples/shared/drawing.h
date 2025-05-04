@@ -59,7 +59,7 @@ SPRITE * createSprite(EFI_UINT32 width, EFI_UINT32 height)
     sprite->width = width;
     sprite->height = height;
     sprite->strideBytes = width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
-    sprite->buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *) (&(sprite->buffer) + sizeof(EFI_UINT32));
+    sprite->buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *) (&(sprite->buffer) + sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL *));
     return sprite;
 }
 
