@@ -58,7 +58,7 @@ typedef struct {
 
 SPRITE * createSprite(EFI_UINT32 width, EFI_UINT32 height)
 {
-    SPRITE * sprite = (SPRITE*) uefi_malloc(sizeof(SPRITE) + sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL) * width * height);
+    SPRITE * sprite = (SPRITE*) malloc(sizeof(SPRITE) + sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL) * width * height);
     sprite->width = width;
     sprite->height = height;
     sprite->strideBytes = width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
@@ -68,7 +68,7 @@ SPRITE * createSprite(EFI_UINT32 width, EFI_UINT32 height)
 
 SPRITE * loadSprite(EFI_UINT32 width, EFI_UINT32 height, const unsigned int * buffer)
 {
-    SPRITE * bitmap = uefi_malloc(sizeof(SPRITE));
+    SPRITE * bitmap = malloc(sizeof(SPRITE));
     bitmap->width = width;
     bitmap->height = height;
     bitmap->strideBytes = width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
@@ -78,7 +78,7 @@ SPRITE * loadSprite(EFI_UINT32 width, EFI_UINT32 height, const unsigned int * bu
 
 void destroySprite(SPRITE * sprite)
 {
-    uefi_free(sprite);
+    free(sprite);
 }
 
 void drawSprite(EFI_UINT32 dx, EFI_UINT32 dy, SPRITE * sprite)

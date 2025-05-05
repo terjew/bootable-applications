@@ -11,7 +11,7 @@
 
 double * InitializeStaticData()
 {
-    double * data = uefi_malloc(stride * height * sizeof(double));
+    double * data = malloc(stride * height * sizeof(double));
     double p1x = width * 0.25;
     double p2x = width * 0.75;
     double p1y = height * 0.25;

@@ -9,7 +9,7 @@ void initialize_memory(EFI_BOOT_SERVICES *boot_services_ptr){
     boot_services = boot_services_ptr;
 }
 
-void * uefi_malloc(EFI_UINTN poolSize)
+void * malloc(EFI_UINTN poolSize)
 {
     EFI_STATUS error;
     void * handle;
@@ -17,9 +17,15 @@ void * uefi_malloc(EFI_UINTN poolSize)
     return error ? 0 : handle;
 }
 
-void uefi_free(void * pool)
+void free(void * pool)
 {
     boot_services->FreePool(pool);
+}
+
+void * memcpy(void * dst, const void * src, unsigned long long len)
+{
+    boot_services->CopyMem(dst, (void*)src, len);
+    return dst;
 }
 
 #endif

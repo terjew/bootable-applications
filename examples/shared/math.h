@@ -5,7 +5,20 @@
 #define M_PI_2 1.57079632679489661923
 #define M_PI_M_2 6.283185307179586476925286766559
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 int _fltused = 0;
+
+float degToRad(float deg)
+{
+    return deg / (180.0 / M_PI);
+}
+
+float radToDeg(float rad)
+{
+    return rad * (180.0 / M_PI);
+}
 
 double cos(double x)
 {
@@ -63,39 +76,5 @@ float roundf(float x)
         return (int)(x + 0.5f);
 }
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
-
-// //phi = ϕ
-// //theta = θ
-// //
-// //Transform:
-// //[cos(ϕ)   sin(ϕ)sin(θ)    0   tx]
-// //[0        cos(θ)          0   ty]
-// //[sin(ϕ)   -cos(ϕ)sin(θ)   0   tz]
-// //[0        0               0    1]
-// void isometricProjection(double matrix[16], double ϕ, double θ, double scale, double tx, double ty, double tz)
-// {
-//     matrix[0] = scale * cos(ϕ);
-//     matrix[1] = sin(ϕ) * sin(θ);
-//     matrix[2] = 0;
-//     matrix[3] = 0;
-
-//     matrix[4] = 0;
-//     matrix[5] = scale * cos(θ);
-//     matrix[6] = 0;
-//     matrix[7] = 0;
-
-//     matrix[8] = sin(ϕ);
-//     matrix[9] = -cos(ϕ) * sin(θ);
-//     matrix[10] = 0;
-//     matrix[11] = 0;
-
-//     matrix[12] = 0;
-//     matrix[13] = 0;
-//     matrix[14] = 0;
-//     matrix[15] = 1;
-// }
 
 #endif

@@ -18,11 +18,13 @@
 #include "sprites/tile_040.h"
 
 #include "shared/matrix.h"
+#include "shared/lineset.h"
 
 #define NULL 0
 
 const EFI_UINT32 TILE_WIDTH = 32;
 const EFI_UINT32 TILE_HEIGHT = 32;
+const EFI_UINT32 TILE_THICKNESS = 8;
 
 typedef struct MAP
 {
@@ -35,57 +37,68 @@ void drawMap(MAP * map, SPRITE ** sprites)
 {
     EFI_UINT32 dx = TILE_WIDTH / 2;
     EFI_UINT32 dy = dx / 2;
-    EFI_UINT32 xpos = width / 2 - dx; //centered on screen    
-    EFI_UINT32 ypos = height / 2 - map->height * dy - TILE_HEIGHT + dy; 
+    EFI_UINT32 map_xpos = width / 2 - dx; //centered on screen    
+    EFI_UINT32 map_ypos = height / 2 - map->height * dy - TILE_HEIGHT + dy; 
 
-    for (EFI_UINT32 y = 0; y < map->height; y++)
-    {
-        for (EFI_UINT32 x = 0; x < map->width; x++)
+    EFI_UINT32 numLayers = 4;
+    for (EFI_UINT32 z = 0; z < numLayers; z++){
+        for (EFI_UINT32 y = 0; y < map->height; y++)
         {
-            EFI_UINT8 tileIndex = map->tiles[y * map->width + x];
-            SPRITE * sprite = sprites[tileIndex];
-            EFI_UINT32 xs = xpos + (x - y) * dx;
-            EFI_UINT32 ys = ypos + (x + y) * dy;
-            if (sprite != NULL) drawSpriteTransparent(xs, ys, sprite);
+            for (EFI_UINT32 x = 0; x < map->width; x++)
+            {
+                EFI_UINT8 tileIndex = map->tiles[y * map->width + x];
+                SPRITE * sprite = sprites[tileIndex];
+                EFI_UINT32 xs = map_xpos + (x - y) * dx;
+                EFI_UINT32 ys = map_ypos + (x + y) * dy - z * TILE_THICKNESS;
+                if (sprite != NULL) drawSpriteTransparent(xs, ys, sprite);
+            }
         }
     }
 
-    float zrot[4][4]; rotateZ(zrot, -M_PI / 4);
-    float xrot[4][4]; rotateX(xrot, 1.0472);//60 degrees 
-    float trans[4][4]; translate(trans, xpos + 15.5, ypos + 8, 0);
-    float scaleFactor = 22.60;//?
+    float zrot[4][4]; rotateZ(zrot, -degToRad(45));
+    float xrot[4][4]; rotateX(xrot, degToRad(60));
+    float trans[4][4]; translate(trans, map_xpos + 16, map_ypos + 8, 0);
+    float scaleFactor = 32 * cos(M_PI / 4);
     float scalem[4][4]; scale(scalem, scaleFactor, scaleFactor, scaleFactor);
     float trans_scale[4][4]; mul(scalem, trans, trans_scale);
     float trans_scale_rot1[4][4]; mul(xrot, trans_scale, trans_scale_rot1);
     float mat[4][4]; mul(zrot, trans_scale_rot1, mat);
 
-    float p1[] = {0,0,0.5,1};
-    float p2[] = {map->width,0,0.5,1};
-    float p3[] = {0,map->height,0.5,1};
-    float p4[] = {map->width,map->height,0.5,1};
+    float layerDepth = -0.45;
+    float bottomZ = layerDepth * -1;
+    float topZ = layerDepth * 3;
 
-    float p1_trans[4];
-    float p2_trans[4];
-    float p3_trans[4];
-    float p4_trans[4];
+    LINESET * lineset = createLineset(8, 6, 4, 1);
+    float vertices[8][3] = {
+        {0,0,bottomZ},
+        {map->width,0,bottomZ},
+        {map->width,map->height,bottomZ},
+        {0,map->height,bottomZ},
+        {0,0,topZ},
+        {map->width,0,topZ},
+        {map->width,map->height,topZ},
+        {0,map->height,topZ},
+    };
+    memcpy(lineset->vertices, vertices, 8 * 3 * sizeof(float));
 
-    transform(mat, p1, p1_trans);
-    transform(mat, p2, p2_trans);
-    transform(mat, p3, p3_trans);
-    transform(mat, p4, p4_trans);
+    int lines[6][4] = {
+        {0,1,2,3},
+        {4,5,6,7},
+        {3,7,6,2},
+        {0,4,5,1},
+        {0,4,7,3},
+        {1,2,6,5},
+    };
+    memcpy(lineset->lines, lines, 6 * 4 * sizeof(int));
 
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL green = color(0,255,0);
-    drawLine(p1_trans[0], p1_trans[1], p2_trans[0], p2_trans[1], green);
-    drawLine(p1_trans[0], p1_trans[1], p3_trans[0], p3_trans[1], green);
-    drawLine(p2_trans[0], p2_trans[1], p4_trans[0], p4_trans[1], green);
-    drawLine(p3_trans[0], p3_trans[1], p4_trans[0], p4_trans[1], green);
-
+    renderLineset(lineset, mat, green);
 }
 
 
 MAP * createMap(EFI_UINT32 width, EFI_UINT32 height)
 {
-    MAP * map = (MAP *) uefi_malloc(sizeof(MAP) + sizeof(EFI_UINT8) * width * height);
+    MAP * map = (MAP *) malloc(sizeof(MAP) + sizeof(EFI_UINT8) * width * height);
     map->width = width;
     map->height = height;
     return map;

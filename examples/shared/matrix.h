@@ -92,13 +92,21 @@ void mul(float src1[4][4], float src2[4][4], float dest[4][4])
     dest[3][3] = src1[3][0] * src2[0][3] + src1[3][1] * src2[1][3] + src1[3][2] * src2[2][3] + src1[3][3] * src2[3][3]; 
 }
 
-void transform(float m[4][4], float in[4], float out[4])
+void transformVec4(float m[4][4], float in[4], float out[4])
 {
     float x = in[0], y = in[1], z = in[2], w = in[3];
     out[0] = m[0][0] * x + m[1][0] * y + m[2][0] * z + m[3][0] * w;
     out[1] = m[0][1] * x + m[1][1] * y + m[2][1] * z + m[3][1] * w;
     out[2] = m[0][2] * x + m[1][2] * y + m[2][2] * z + m[3][2] * w;
     out[3] = m[0][3] * x + m[1][3] * y + m[2][3] * z + m[3][3] * w;
+}
+
+void transformVec3(float m[4][4], float in[3], float out[3])
+{
+    float x = in[0], y = in[1], z = in[2];
+    out[0] = m[0][0] * x + m[1][0] * y + m[2][0] * z + m[3][0];
+    out[1] = m[0][1] * x + m[1][1] * y + m[2][1] * z + m[3][1];
+    out[2] = m[0][2] * x + m[1][2] * y + m[2][2] * z + m[3][2];
 }
 
 #endif
