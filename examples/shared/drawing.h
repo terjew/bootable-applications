@@ -3,6 +3,7 @@
 
 #include "lil_uefi/lil_uefi.h"
 #include "memory.h"
+#include "math.h"
 
 EFI_GRAPHICS_OUTPUT_PROTOCOL * graphics;
 EFI_UINT32 width;
@@ -49,7 +50,7 @@ void clear(EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
     drawRectangle(0, 0, width, height, color);
 }
 
-typedef struct {
+typedef struct SPRITE {
     EFI_UINT32 width;
     EFI_UINT32 height;
     EFI_UINT32 strideBytes;
@@ -107,7 +108,7 @@ void drawSpriteTransparent(EFI_UINT32 dx, EFI_UINT32 dy, SPRITE * sprite)
     }
 }
 
-void drawLine(EFI_UINT32 x0, EFI_UINT32 y0, EFI_UINT32 x1, EFI_UINT32 y1, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
+void drawLine(EFI_UINT32 x0, EFI_UINT32 y0, EFI_UINT32 x1, EFI_UINT32 y1, EFI_GRAPHICS_OUTPUT_BLT_PIXEL * pixels, EFI_UINT32 stride, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
 {
     int dx = x1 - x0;
     int dy = y1 - y0;
@@ -128,14 +129,6 @@ void drawLine(EFI_UINT32 x0, EFI_UINT32 y0, EFI_UINT32 x1, EFI_UINT32 y1, EFI_GR
         xf += xIncrement;
         yf += yIncrement;
     }
-}
-
-void drawQuad(EFI_UINT32 x0, EFI_UINT32 y0, EFI_UINT32 x1, EFI_UINT32 y1, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
-{
-    drawLine(x0, y0, x1, y0, color);
-    drawLine(x1, y0, x1, y1, color);
-    drawLine(x1, y1, x0, y1, color);
-    drawLine(x0, y1, x0, y0, color);
 }
 
 #endif

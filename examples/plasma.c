@@ -39,8 +39,8 @@ void plasma(double time)
 {
     if (staticData == 0) staticData = InitializeStaticData();
     if (backBuffer == 0) {
-        fill(backBuffer->buffer, backBuffer->width * backBuffer->height, color(0,0,0));
         backBuffer = createSprite(width, height);
+        fill(backBuffer->buffer, backBuffer->width * backBuffer->height, color(0,0,0));
     }
     interlacing = (interlacing + 1) % 2;
 

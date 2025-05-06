@@ -55,14 +55,20 @@ void drawMap(MAP * map, SPRITE ** sprites)
         }
     }
 
-    float zrot[4][4]; rotateZ(zrot, -degToRad(45));
-    float xrot[4][4]; rotateX(xrot, degToRad(60));
-    float trans[4][4]; translate(trans, map_xpos + 16, map_ypos + 8, 0);
-    float scaleFactor = 32 * cos(M_PI / 4);
-    float scalem[4][4]; scale(scalem, scaleFactor, scaleFactor, scaleFactor);
-    float trans_scale[4][4]; mul(scalem, trans, trans_scale);
-    float trans_scale_rot1[4][4]; mul(xrot, trans_scale, trans_scale_rot1);
-    float mat[4][4]; mul(zrot, trans_scale_rot1, mat);
+    Matrix4 mat;
+    make_identity(mat);
+
+    // These two rotations take a square in xy space to a squashed 2:1 tile in projected space:
+    rotateZ(mat, -degToRad(45));
+    rotateX(mat, degToRad(60));
+    
+    //Then we scale up so that 1 unit in xy space matches the extent of one tile sprite.
+    //The scale factor (around 22) is the length of the "diagonal" in the tile image
+    float scaleFactor = 32 * cos(degToRad(45));
+    scale(mat, scaleFactor, scaleFactor, scaleFactor);
+
+    //We move the coordinate system so the origin matches the top left corner of the top left tile
+    translate(mat, map_xpos + 16, map_ypos + 8, 0);
 
     float layerDepth = -0.45;
     float bottomZ = layerDepth * -1;
@@ -92,7 +98,7 @@ void drawMap(MAP * map, SPRITE ** sprites)
     memcpy(lineset->lines, lines, 6 * 4 * sizeof(int));
 
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL green = color(0,255,0);
-    renderLineset(lineset, mat, green);
+    renderLineset(lineset, mat, pixels, stride, green);
 }
 
 
