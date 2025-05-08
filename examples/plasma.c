@@ -82,6 +82,8 @@ void plasma(double time)
 // entry point
 EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 {
+    *((int volatile *)&_fltused)=0; //prevent LTO from removing the marker symbol _fltused
+
     EFI_BOOT_SERVICES *boot_services = system_table->BootServices;
     EFI_STATUS status;
 
@@ -113,4 +115,7 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
     }
 
     return 0;
+
+    //prevent link-time optimization from removing the _fltused marker, indicating that we are using floating point functionality
+    
 }

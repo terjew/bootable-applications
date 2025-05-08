@@ -127,6 +127,8 @@ void fillMap(MAP * map, EFI_UINT32 numTiles)
 // entry point
 EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 {
+    *((int volatile *)&_fltused)=0; //prevent LTO from removing the marker symbol _fltused
+
     EFI_BOOT_SERVICES *boot_services = system_table->BootServices;
     EFI_STATUS status;
     int ns;

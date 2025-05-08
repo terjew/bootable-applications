@@ -1,7 +1,7 @@
 #include "lil_uefi/lil_uefi.h"
 #include "shared/drawing.h"
 #include "shared/lineset.h"
-#include "sprites/teapot.h"
+#include "models/teapot.h"
 
 #define NULL 0
 
@@ -36,6 +36,8 @@ void teapot(float zdeg)
 
 EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 {
+    *((int volatile *)&_fltused)=0; //prevent LTO from removing the marker symbol _fltused
+
     EFI_BOOT_SERVICES *boot_services = system_table->BootServices;
     EFI_STATUS status;
 
