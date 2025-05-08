@@ -33,14 +33,26 @@ typedef struct MAP
     EFI_UINT8 tiles[0];
 } MAP;
 
+EFI_GRAPHICS_OUTPUT_BLT_PIXEL alwaysgreen(float point[3])
+{
+    //z values from approx -50 to 250 seems to be the range for the scaled and rotated teapot
+    int zscaled = 15 + MIN(MAX(0,point[2]/5), 240);
+    return color(0,zscaled,0);
+}
+
+EFI_GRAPHICS_OUTPUT_BLT_PIXEL red(float point[3])
+{
+    return color(255,0,0);
+}
+
 void drawMap(MAP * map, SPRITE ** sprites)
 {
     EFI_UINT32 dx = TILE_WIDTH / 2;
     EFI_UINT32 dy = dx / 2;
     EFI_UINT32 map_xpos = width / 2 - dx; //centered on screen    
-    EFI_UINT32 map_ypos = height / 2 - map->height * dy - TILE_HEIGHT + dy; 
+    EFI_UINT32 map_ypos = height / 2 - map->height * dy - TILE_HEIGHT + dy + 64; 
 
-    EFI_UINT32 numLayers = 4;
+    EFI_UINT32 numLayers = 10;
     for (EFI_UINT32 z = 0; z < numLayers; z++){
         for (EFI_UINT32 y = 0; y < map->height; y++)
         {
@@ -58,47 +70,35 @@ void drawMap(MAP * map, SPRITE ** sprites)
     Matrix4 mat;
     make_identity(mat);
 
-    // These two rotations take a square in xy space to a squashed 2:1 tile in projected space:
-    rotateZ(mat, -degToRad(45));
-    rotateX(mat, degToRad(60));
     
+    //We move the coordinate system so the origin matches the top left corner of the top left tile
+    translate(mat, map_xpos + 16, map_ypos + 8, 0);
+
     //Then we scale up so that 1 unit in xy space matches the extent of one tile sprite.
     //The scale factor (around 22) is the length of the "diagonal" in the tile image
     float scaleFactor = 32 * cos(degToRad(45));
     scale(mat, scaleFactor, scaleFactor, scaleFactor);
 
-    //We move the coordinate system so the origin matches the top left corner of the top left tile
-    translate(mat, map_xpos + 16, map_ypos + 8, 0);
+    // These two rotations take a square in xy space to a squashed 2:1 tile in projected space:
+    rotateX(mat, degToRad(-60));//rotate the bottom of the square forward by 60 degrees along the scene x axis to achieve the squash
+    rotateZ(mat, -degToRad(45));//then rotate 45 degrees along the object z axis to orient it along the diagonal tile grid
 
-    float layerDepth = -0.45;
+    float layerDepth = 0.41;
     float bottomZ = layerDepth * -1;
-    float topZ = layerDepth * 3;
+    float topZ = layerDepth * (numLayers-1);
 
-    LINESET * lineset = createLineset(8, 6, 4, 1);
-    float vertices[8][3] = {
-        {0,0,bottomZ},
-        {map->width,0,bottomZ},
-        {map->width,map->height,bottomZ},
-        {0,map->height,bottomZ},
-        {0,0,topZ},
-        {map->width,0,topZ},
-        {map->width,map->height,topZ},
-        {0,map->height,topZ},
-    };
-    memcpy(lineset->vertices, vertices, 8 * 3 * sizeof(float));
+    float min[3] = {0,0,bottomZ};
+    float max[3] = {map->width,map->height,topZ};    
+    LINESET * extents = createCuboid(min, max);
+    renderLineset(extents, mat, pixels, stride, alwaysgreen);
 
-    int lines[6][4] = {
-        {0,1,2,3},
-        {4,5,6,7},
-        {3,7,6,2},
-        {0,4,5,1},
-        {0,4,7,3},
-        {1,2,6,5},
-    };
-    memcpy(lineset->lines, lines, 6 * 4 * sizeof(int));
+    float minCell[3] = {map->width / 2, map->height - 1, topZ - layerDepth};
+    float maxCell[3] = {map->width / 2 + 1, map->height, topZ};
+    LINESET * cell = createCuboid(minCell, maxCell);
+    renderLineset(cell, mat, pixels, stride, red);
 
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL green = color(0,255,0);
-    renderLineset(lineset, mat, pixels, stride, green);
+    free(extents);
+    free(cell);
 }
 
 

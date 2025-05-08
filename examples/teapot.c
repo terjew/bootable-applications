@@ -5,6 +5,14 @@
 
 #define NULL 0
 
+
+EFI_GRAPHICS_OUTPUT_BLT_PIXEL colorfunc(float point[3])
+{
+    //z values from approx -50 to 250 seems to be the range for the scaled and rotated teapot
+    int zscaled = 15 + MIN(MAX(0,point[2]+30), 240);
+    return color(zscaled,zscaled,zscaled);
+}
+
 LINESET * teapot_data = NULL;
 SPRITE * backBuffer = NULL;
 void teapot(float zdeg)
@@ -19,16 +27,16 @@ void teapot(float zdeg)
     
     float mat[4][4];
     make_identity(mat);
-    rotateY(mat, degToRad(zdeg));
-    rotateX(mat, degToRad(-135));
-    scale(mat, 300, 300, 300);
-    translate(mat, 320, 300, 0);
+    translate(mat, 320, 330, 0);//move the object to be approx centered on the viewport
+    scale(mat, 300, 300, 300);//scale it up so it more or less fills the viewport space
+    rotateX(mat, degToRad(-135));//rotate along the scene x axis
+    rotateY(mat, degToRad(zdeg));//rotate around the objects original y axis, now close to the scene z axis
     
     //clear backbuffer:
     fill(backBuffer->buffer, backBuffer->width * backBuffer->height, color(0,0,0));
 
     //render lines to backbuffer:
-    renderLineset(teapot_data, mat, backBuffer->buffer, backBuffer->width, color(255, 200, 200));
+    renderLineset(teapot_data, mat, backBuffer->buffer, backBuffer->width, colorfunc);
 
     //render backbuffer to display:
     drawSprite(0, 0, backBuffer);

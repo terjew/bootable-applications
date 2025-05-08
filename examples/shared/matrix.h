@@ -64,7 +64,7 @@ void rotateZ(Matrix4 matrix, float θ)
     Matrix4 tmp;
     Matrix4 result;
     make_rotateZ(tmp, θ);
-    mul(matrix, tmp, result);
+    mul(tmp, matrix, result);
     memcpy(matrix, result, 16 * sizeof(float));
 }
 
@@ -84,7 +84,7 @@ void rotateY(Matrix4 matrix, float θ)
     Matrix4 tmp;
     Matrix4 result;
     make_rotateY(tmp, θ);
-    mul(matrix, tmp, result);
+    mul(tmp, matrix, result);
     memcpy(matrix, result, 16 * sizeof(float));
 }
 
@@ -103,7 +103,7 @@ void rotateX(Matrix4 matrix, float θ)
     Matrix4 tmp;
     Matrix4 result;
     make_rotateX(tmp, θ);
-    mul(matrix, tmp, result);
+    mul(tmp, matrix, result);
     memcpy(matrix, result, 16 * sizeof(float));
 }
 
@@ -120,7 +120,7 @@ void translate(Matrix4 matrix, float tx, float ty, float tz)
     Matrix4 tmp;
     Matrix4 result;
     make_translate(tmp, tx, ty, tz);
-    mul(matrix, tmp, result);
+    mul(tmp, matrix, result);
     memcpy(matrix, result, 16 * sizeof(float));
 }
 
@@ -137,7 +137,7 @@ void scale(Matrix4 matrix, float sx, float sy, float sz)
     Matrix4 tmp;
     Matrix4 result;
     make_scale(tmp, sx, sy, sz);
-    mul(matrix, tmp, result);
+    mul(tmp, matrix, result);
     memcpy(matrix, result, 16 * sizeof(float));
 }
 
