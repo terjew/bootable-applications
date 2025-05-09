@@ -33,7 +33,7 @@ typedef struct MAP
     EFI_UINT8 tiles[0];
 } MAP;
 
-EFI_GRAPHICS_OUTPUT_BLT_PIXEL alwaysgreen(float point[3])
+EFI_GRAPHICS_OUTPUT_BLT_PIXEL depthgreen(float point[3])
 {
     //z values from approx -50 to 250 seems to be the range for the scaled and rotated teapot
     int zscaled = 15 + MIN(MAX(0,point[2]/5), 240);
@@ -45,12 +45,19 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL red(float point[3])
     return color(255,0,0);
 }
 
-void drawMap(MAP * map, SPRITE ** sprites)
+BITMAP * backBuffer = 0;
+
+void drawMap(MAP * map, BITMAP ** sprites, int selected[3])
 {
+    if (backBuffer == 0) {
+        backBuffer = createBitmap(screen->width, screen->height);
+    }
+    fill(backBuffer->buffer, backBuffer->width * backBuffer->height, color(0,0,0));
+
     EFI_UINT32 dx = TILE_WIDTH / 2;
     EFI_UINT32 dy = dx / 2;
-    EFI_UINT32 map_xpos = width / 2 - dx; //centered on screen    
-    EFI_UINT32 map_ypos = height / 2 - map->height * dy - TILE_HEIGHT + dy + 64; 
+    EFI_UINT32 map_xpos = screen->width / 2 - dx - 0.3; //centered on screen    
+    EFI_UINT32 map_ypos = screen->height / 2 - map->height * dy - TILE_HEIGHT + dy + 64; 
 
     EFI_UINT32 numLayers = 10;
     for (EFI_UINT32 z = 0; z < numLayers; z++){
@@ -59,17 +66,16 @@ void drawMap(MAP * map, SPRITE ** sprites)
             for (EFI_UINT32 x = 0; x < map->width; x++)
             {
                 EFI_UINT8 tileIndex = map->tiles[y * map->width + x];
-                SPRITE * sprite = sprites[tileIndex];
+                BITMAP * sprite = sprites[tileIndex];
                 EFI_UINT32 xs = map_xpos + (x - y) * dx;
                 EFI_UINT32 ys = map_ypos + (x + y) * dy - z * TILE_THICKNESS;
-                if (sprite != NULL) drawSpriteTransparent(xs, ys, sprite);
+                if (sprite != NULL) drawSpriteTransparent(xs, ys, sprite, backBuffer);
             }
         }
     }
 
     Matrix4 mat;
     make_identity(mat);
-
     
     //We move the coordinate system so the origin matches the top left corner of the top left tile
     translate(mat, map_xpos + 16, map_ypos + 8, 0);
@@ -90,13 +96,15 @@ void drawMap(MAP * map, SPRITE ** sprites)
     float min[3] = {0,0,bottomZ};
     float max[3] = {map->width,map->height,topZ};    
     LINESET * extents = createCuboid(min, max);
-    renderLineset(extents, mat, pixels, stride, alwaysgreen);
+    renderLineset(extents, mat, backBuffer, depthgreen);
 
-    float minCell[3] = {map->width / 2, map->height - 1, topZ - layerDepth};
-    float maxCell[3] = {map->width / 2 + 1, map->height, topZ};
+    float minCell[3] = {selected[0], selected[1], (selected[2] - 1) * layerDepth};
+    float maxCell[3] = {selected[0] + 1, selected[1] + 1, selected[2] * layerDepth};
     LINESET * cell = createCuboid(minCell, maxCell);
-    renderLineset(cell, mat, pixels, stride, red);
+    renderLineset(cell, mat, backBuffer, red);
 
+    drawSpriteToScreen(0,0,backBuffer);
+    
     free(extents);
     free(cell);
 }
@@ -122,6 +130,20 @@ void fillMap(MAP * map, EFI_UINT32 numTiles)
             map->tiles[y * map->width + x] = randRange(0, numTiles - 1);
         }
     }
+}
+
+#define DIR_FORWARD 0x01
+#define DIR_BACKWARD 0x02
+#define DIR_RIGHT 0x03
+#define DIR_LEFT 0x04
+#define DIR_UP 0x09
+#define DIR_DOWN 0x0a
+
+int dimensions[3] = {20,20,10};
+void move(int pos[3], int axis, int direction)
+{
+    int newpos = pos[axis] + direction;
+    pos[axis] = MAX(0, MIN(dimensions[axis]-1, newpos));
 }
 
 // entry point
@@ -157,54 +179,83 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 
     srand(time.Second);
 
-    SPRITE * tiles[] = {
-        loadSprite(32, 32, tile_000),
-        loadSprite(32, 32, tile_001),
-        loadSprite(32, 32, tile_002),
-        loadSprite(32, 32, tile_004),
-        loadSprite(32, 32, tile_005),
-        loadSprite(32, 32, tile_006),
-        loadSprite(32, 32, tile_007),
-        loadSprite(32, 32, tile_008),
-        loadSprite(32, 32, tile_009),
-        loadSprite(32, 32, tile_010),
-        loadSprite(32, 32, tile_022),
-        loadSprite(32, 32, tile_023),
-        loadSprite(32, 32, tile_040),
+    BITMAP * tiles[] = {
+        loadBitmap(32, 32, 32, tile_000),
+        loadBitmap(32, 32, 32, tile_001),
+        loadBitmap(32, 32, 32, tile_002),
+        loadBitmap(32, 32, 32, tile_004),
+        loadBitmap(32, 32, 32, tile_005),
+        loadBitmap(32, 32, 32, tile_006),
+        loadBitmap(32, 32, 32, tile_007),
+        loadBitmap(32, 32, 32, tile_008),
+        loadBitmap(32, 32, 32, tile_009),
+        loadBitmap(32, 32, 32, tile_010),
+        loadBitmap(32, 32, 32, tile_022),
+        loadBitmap(32, 32, 32, tile_023),
+        loadBitmap(32, 32, 32, tile_040),
         NULL,
         NULL,
         NULL,
         NULL,
     };
 
+    int selected[3] = {1,19,9};
+    
     MAP * map = createMap(20,20);
     fillMap(map, 16);    
-    drawMap(map, tiles);
+    drawMap(map, tiles, selected);
 
     for (;;)
     {
         system_table->BootServices->WaitForEvent(1, &system_table->ConIn->WaitForKey, &event);
         system_table->ConIn->ReadKeyStroke(system_table->ConIn, &key);
 
+        int cont = 0;
+
         switch(key.ScanCode)
         {
             case 0x17: 
                 system_table->RuntimeServices->ResetSystem(EFI_RESET_TYPE_Shutdown, 0, 0, NULL);
+            case DIR_FORWARD:
+                move(selected, 1, -1);
+                drawMap(map, tiles, selected);
+                break;
+            case DIR_BACKWARD:
+                move(selected, 1, 1);
+                drawMap(map, tiles, selected);
+                break;
+            case DIR_LEFT:
+                move(selected, 0, -1);
+                drawMap(map, tiles, selected);
+                break;
+            case DIR_RIGHT:
+                move(selected, 0, 1);
+                drawMap(map, tiles, selected);
+                break;
+            case DIR_DOWN:
+                move(selected, 2, -1);
+                drawMap(map, tiles, selected);
+                break;
+            case DIR_UP:
+                move(selected, 2, 1);
+                drawMap(map, tiles, selected);
+                break;
             default:
+                cont = 1;
                 break;
         }
-        switch (key.UnicodeChar)
+        if (cont) switch (key.UnicodeChar)
         {
             case 'm':
-                clear(color(0,0,0));
-                fillMap(map, 16);    
-                drawMap(map, tiles);
+                clearScreen(color(0,0,0));
+                fillMap(map, 16);
+                drawMap(map, tiles, selected);
                 break;
             case 'q':
-                clear(color(240, 127, 34));
+                clearScreen(color(240, 127, 34));
                 break;
             default:              
-                clear(randomColor());
+                clearScreen(randomColor());
                 break;
         }
     }

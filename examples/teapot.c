@@ -14,7 +14,7 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL colorfunc(float point[3])
 }
 
 LINESET * teapot_data = NULL;
-SPRITE * backBuffer = NULL;
+BITMAP * backBuffer = NULL;
 void teapot(float zdeg)
 {
     if (teapot_data == NULL)
@@ -22,7 +22,7 @@ void teapot(float zdeg)
         teapot_data = createLineset(teapotVertsCount, teapotFaceIndexesCount, 3, 1);
         memcpy(teapot_data->vertices, teapotVerts, teapotVertsCount * sizeof(float) * 3);
         memcpy(teapot_data->lines, teapotFaceIndexes, teapotFaceIndexesCount * sizeof(int) * 3);  
-        backBuffer = createSprite(width, height);
+        backBuffer = createBitmap(screen->width, screen->height);
     }
     
     float mat[4][4];
@@ -36,10 +36,10 @@ void teapot(float zdeg)
     fill(backBuffer->buffer, backBuffer->width * backBuffer->height, color(0,0,0));
 
     //render lines to backbuffer:
-    renderLineset(teapot_data, mat, backBuffer->buffer, backBuffer->width, colorfunc);
+    renderLineset(teapot_data, mat, backBuffer, colorfunc);
 
     //render backbuffer to display:
-    drawSprite(0, 0, backBuffer);
+    drawSpriteToScreen(0, 0, backBuffer);
 }
 
 EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)

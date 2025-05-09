@@ -5,21 +5,45 @@
 #include "memory.h"
 #include "math.h"
 
+typedef struct BITMAP {
+    EFI_UINT32 width;
+    EFI_UINT32 height;
+    EFI_UINT32 stride;
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL * buffer;
+} BITMAP;
+
 EFI_GRAPHICS_OUTPUT_PROTOCOL * graphics;
-EFI_UINT32 width;
-EFI_UINT32 height;
-EFI_UINT32 stride;
-EFI_GRAPHICS_OUTPUT_BLT_PIXEL * pixels;
-EFI_UINT32 bufferSize;
+BITMAP * screen;
+
+BITMAP * createBitmap(EFI_UINT32 width, EFI_UINT32 height)
+{
+    BITMAP * sprite = (BITMAP*) malloc(sizeof(BITMAP) + sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL) * width * height);
+    sprite->width = width;
+    sprite->height = height;
+    sprite->stride = width;
+    sprite->buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *) (&(sprite->buffer) + sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL *));
+    return sprite;
+}
+
+BITMAP * loadBitmap(EFI_UINT32 width, EFI_UINT32 height, EFI_UINT32 stride, const unsigned int * buffer)
+{
+    BITMAP * bitmap = malloc(sizeof(BITMAP));
+    bitmap->width = width;
+    bitmap->height = height;
+    bitmap->stride = stride;
+    bitmap->buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*) buffer;
+    return bitmap;
+}
+
+void destroySprite(BITMAP * sprite)
+{
+    free(sprite);
+}
 
 void initialize_drawing(EFI_GRAPHICS_OUTPUT_PROTOCOL * graphics_in)
 {
     graphics = graphics_in;
-    pixels = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *) graphics->Mode->frame_buffer_base;    
-    width =  graphics->Mode->info->HorizontalResolution;
-    height = graphics->Mode->info->VerticalResolution;
-    stride = graphics->Mode->info->PixelsPerScanLine;
-    bufferSize = graphics->Mode->frame_buffer_size;
+    screen = loadBitmap(graphics->Mode->info->HorizontalResolution, graphics->Mode->info->VerticalResolution, graphics->Mode->info->PixelsPerScanLine, (const unsigned int *) graphics->Mode->frame_buffer_base);
 }
 
 void fill(EFI_GRAPHICS_OUTPUT_BLT_PIXEL * buffer, EFI_UINT32 size, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
@@ -39,60 +63,28 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL color(EFI_UINT32 r, EFI_UINT32 g, EFI_UINT32 b)
     return p;
 }
 
-void drawRectangle(EFI_UINT32 dx, EFI_UINT32 dy, EFI_UINT32 width, EFI_UINT32 height, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
+void drawRectangleScreen(EFI_UINT32 dx, EFI_UINT32 dy, EFI_UINT32 width, EFI_UINT32 height, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
 {
     EFI_UINT32 * buffer = (EFI_UINT32 *) &color;
     graphics->Blt(graphics, buffer, EFI_GRAPHICS_OUTPUT_BLT_OPERATION_VideoFill, 0, 0, dx, dy, width, height, 0);
 }
 
-void clear(EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
+void clearScreen(EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
 {
-    drawRectangle(0, 0, width, height, color);
+    drawRectangleScreen(0, 0, screen->width, screen->height, color);
 }
 
-typedef struct SPRITE {
-    EFI_UINT32 width;
-    EFI_UINT32 height;
-    EFI_UINT32 strideBytes;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL * buffer;
-} SPRITE;
-
-SPRITE * createSprite(EFI_UINT32 width, EFI_UINT32 height)
+void drawSpriteToScreen(EFI_UINT32 dx, EFI_UINT32 dy, BITMAP * sprite)
 {
-    SPRITE * sprite = (SPRITE*) malloc(sizeof(SPRITE) + sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL) * width * height);
-    sprite->width = width;
-    sprite->height = height;
-    sprite->strideBytes = width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
-    sprite->buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *) (&(sprite->buffer) + sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL *));
-    return sprite;
+    graphics->Blt(graphics, (EFI_UINT32*)sprite->buffer, EFI_GRAPHICS_OUTPUT_BLT_OPERATION_BufferToVideo, 0, 0, dx, dy, sprite->width, sprite->height, sprite->stride * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 }
 
-SPRITE * loadSprite(EFI_UINT32 width, EFI_UINT32 height, const unsigned int * buffer)
+void grabScreenToSprite(EFI_UINT32 sx, EFI_UINT32 sy, BITMAP * sprite)
 {
-    SPRITE * bitmap = malloc(sizeof(SPRITE));
-    bitmap->width = width;
-    bitmap->height = height;
-    bitmap->strideBytes = width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
-    bitmap->buffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*) buffer;
-    return bitmap;
+    graphics->Blt(graphics, (EFI_UINT32*)sprite->buffer, EFI_GRAPHICS_OUTPUT_BLT_OPERATION_VideoToBuffer, sx, sy, 0, 0, sprite->width, sprite->height, sprite->stride  * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 }
 
-void destroySprite(SPRITE * sprite)
-{
-    free(sprite);
-}
-
-void drawSprite(EFI_UINT32 dx, EFI_UINT32 dy, SPRITE * sprite)
-{
-    graphics->Blt(graphics, (EFI_UINT32*)sprite->buffer, EFI_GRAPHICS_OUTPUT_BLT_OPERATION_BufferToVideo, 0, 0, dx, dy, sprite->width, sprite->height, sprite->strideBytes);
-}
-
-void grabScreenToSprite(EFI_UINT32 sx, EFI_UINT32 sy, SPRITE * sprite)
-{
-    graphics->Blt(graphics, (EFI_UINT32*)sprite->buffer, EFI_GRAPHICS_OUTPUT_BLT_OPERATION_VideoToBuffer, sx, sy, 0, 0, sprite->width, sprite->height, sprite->strideBytes);
-}
-
-void drawSpriteTransparent(EFI_UINT32 dx, EFI_UINT32 dy, SPRITE * sprite)
+void drawSpriteTransparent(EFI_UINT32 dx, EFI_UINT32 dy, BITMAP * sprite, BITMAP * target)
 {
     for (EFI_UINT32 y = 0; y < sprite->height; y++)
     {
@@ -102,13 +94,13 @@ void drawSpriteTransparent(EFI_UINT32 dx, EFI_UINT32 dy, SPRITE * sprite)
             int px = x + dx;
             EFI_GRAPHICS_OUTPUT_BLT_PIXEL pixel = sprite->buffer[y * sprite->width + x];
             if (pixel.Reserved != 0) {
-                pixels[py * stride + px] = pixel;
+                target->buffer[py * target->stride + px] = pixel;
             }
         }
     }
 }
 
-void drawLine(EFI_UINT32 x0, EFI_UINT32 y0, EFI_UINT32 x1, EFI_UINT32 y1, EFI_GRAPHICS_OUTPUT_BLT_PIXEL * pixels, EFI_UINT32 stride, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
+void drawLine(int x0, int y0, int x1, int y1, BITMAP * target, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color)
 {
     int dx = x1 - x0;
     int dy = y1 - y0;
@@ -123,9 +115,12 @@ void drawLine(EFI_UINT32 x0, EFI_UINT32 y0, EFI_UINT32 x1, EFI_UINT32 y1, EFI_GR
     float yf = y0;
     for (EFI_UINT32 step = 0; step <= numSteps; ++step)
     {
-        EFI_UINT32 x = (EFI_UINT32)roundf(xf);
-        EFI_UINT32 y = (EFI_UINT32)roundf(yf);
-        pixels[y * stride + x] = color;
+        int x = roundf(xf);
+        int y = roundf(yf);
+        EFI_UINT32 index = y * target->stride + x;
+        if (index >= 0 && index < y * target->stride * target->height){
+            target->buffer[y * target->stride + x] = color;
+        }
         xf += xIncrement;
         yf += yIncrement;
     }

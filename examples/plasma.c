@@ -11,18 +11,18 @@
 
 double * InitializeStaticData()
 {
-    double * data = malloc(stride * height * sizeof(double));
-    double p1x = width * 0.25;
-    double p2x = width * 0.75;
-    double p1y = height * 0.25;
-    double p2y = height * 0.375;
-    double scaleFactor = (width / 20);
+    double * data = malloc(screen->stride * screen->height * sizeof(double));
+    double p1x = screen->width * 0.25;
+    double p2x = screen->width * 0.75;
+    double p1y = screen->height * 0.25;
+    double p2y = screen->height * 0.375;
+    double scaleFactor = (screen->width / 20);
 
-    for (int y = 0; y < height; y += 1)
+    for (int y = 0; y < screen->height; y += 1)
     {
-        for (int x = 0; x < width; x += 1)
+        for (int x = 0; x < screen->width; x += 1)
         {
-            data[y * stride + x] = 
+            data[y * screen->stride + x] = 
                 sin(dist(x, y, p1x,  p1y) / scaleFactor) + // constant for each x,y. Distance from a point at 0.25,0.25 in screen coords
                 sin(dist(x, y, p2x,  p2y) / scaleFactor) + // constant for each x,y. Distance from a point at 0.75,0.375 in screen coords
                 0;
@@ -32,14 +32,14 @@ double * InitializeStaticData()
 }
 
 double * staticData = 0;
-SPRITE * backBuffer = 0;
+BITMAP * backBuffer = 0;
 
 int interlacing = 0;
 void plasma(double time)
 {
     if (staticData == 0) staticData = InitializeStaticData();
     if (backBuffer == 0) {
-        backBuffer = createSprite(width, height);
+        backBuffer = createBitmap(screen->width, screen->height);
         fill(backBuffer->buffer, backBuffer->width * backBuffer->height, color(0,0,0));
     }
     interlacing = (interlacing + 1) % 2;
@@ -51,8 +51,8 @@ void plasma(double time)
 
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL pixel;
 
-    int w = width;
-    int h = height;
+    int w = screen->width;
+    int h = screen->height;
     double xPos = w / 2 + (w * cos(time / 13));
     double yPos = h / 3 + (h * cos(time / 17));
 
@@ -65,7 +65,7 @@ void plasma(double time)
     {
         for (int x = 0; x < w; x += 1)
         {
-            int pos = y * stride + x;        
+            int pos = y * screen->stride + x;        
             double value = 0.0 +
                            staticData[pos] + 
                            sin(dist(x, y, p3x, yPos) / scaleFactor) + // moving vertically. Distance from a moving point starting at 0.75,0.25 in screen coords
@@ -76,7 +76,7 @@ void plasma(double time)
             backBuffer->buffer[pos] = HsvToRgb(hsva);
         }
     }
-    drawSprite(0,0,backBuffer);
+    drawSpriteToScreen(0,0,backBuffer);
 }
 
 // entry point
