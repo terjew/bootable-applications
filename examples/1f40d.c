@@ -104,7 +104,7 @@ void drawMap(MAP * map, BITMAP ** sprites, int selected[3])
     renderLineset(cell, mat, backBuffer, red);
 
     drawSpriteToScreen(0,0,backBuffer);
-    
+
     free(extents);
     free(cell);
 }
@@ -131,13 +131,6 @@ void fillMap(MAP * map, EFI_UINT32 numTiles)
         }
     }
 }
-
-#define DIR_FORWARD 0x01
-#define DIR_BACKWARD 0x02
-#define DIR_RIGHT 0x03
-#define DIR_LEFT 0x04
-#define DIR_UP 0x09
-#define DIR_DOWN 0x0a
 
 int dimensions[3] = {20,20,10};
 void move(int pos[3], int axis, int direction)
@@ -214,37 +207,34 @@ EFI_UINTN EfiMain(EFI_HANDLE handle, EFI_SYSTEM_TABLE *system_table)
 
         switch(key.ScanCode)
         {
-            case 0x17: 
+            case EFI_SCAN_Esc: 
                 system_table->RuntimeServices->ResetSystem(EFI_RESET_TYPE_Shutdown, 0, 0, NULL);
-            case DIR_FORWARD:
+            case EFI_SCAN_Up:
                 move(selected, 1, -1);
-                drawMap(map, tiles, selected);
                 break;
-            case DIR_BACKWARD:
+            case EFI_SCAN_Down:
                 move(selected, 1, 1);
-                drawMap(map, tiles, selected);
                 break;
-            case DIR_LEFT:
+            case EFI_SCAN_Left:
                 move(selected, 0, -1);
-                drawMap(map, tiles, selected);
                 break;
-            case DIR_RIGHT:
+            case EFI_SCAN_Right:
                 move(selected, 0, 1);
-                drawMap(map, tiles, selected);
                 break;
-            case DIR_DOWN:
+            case EFI_SCAN_PageDown:
                 move(selected, 2, -1);
-                drawMap(map, tiles, selected);
                 break;
-            case DIR_UP:
+            case EFI_SCAN_PageUp:
                 move(selected, 2, 1);
-                drawMap(map, tiles, selected);
                 break;
             default:
                 cont = 1;
                 break;
         }
-        if (cont) switch (key.UnicodeChar)
+        if (!cont){
+            drawMap(map, tiles, selected);
+        } 
+        else switch (key.UnicodeChar)
         {
             case 'm':
                 clearScreen(color(0,0,0));
